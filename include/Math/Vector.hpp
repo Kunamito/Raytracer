@@ -5,6 +5,9 @@
 ** Vector lib for Raytracer
 */
 
+#pragma once
+
+#include "Utils/Color.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -14,17 +17,34 @@ namespace Math {
         public :
             // Constructor for our class
             Vector3D(double x, double y, double z) : _x(x), _y(y), _z(z) {}
+            Vector3D() {}
 
             // Getter for our values
             double x() const { return _x; }
             double y() const { return _y; }
             double z() const { return _z; }
 
-            // Setter for out values
+            Raytracer::Color Cast_Vector() {
+                Raytracer::Color color(0, 0, 0);
+
+                color.setColorX(this->_x);
+                color.setColorY(this->_y);
+                color.setColorZ(this->_z);
+                return color;
+            }
+
+            // Operator for our values
             Vector3D operator+=(Vector3D vec) {
                 this->_x += vec.x();
                 this->_y += vec.y();
                 this->_z += vec.z();
+                return *this;
+            }
+
+            Vector3D operator-() {
+                this->_x = -this->x();
+                this->_y = -this->y();
+                this->_z = -this->z();
                 return *this;
             }
 
@@ -45,7 +65,20 @@ namespace Math {
 
             double length_squared() const {
                return this->x()*this->x() + this->y() * this->y() + this->z() * this->z();
-           }
+            }
+
+            bool near_zero() const {
+                float s = 1e-8;
+                return (std::fabs(this->x()) < s) && (std::fabs(this->y()) < s) && (std::fabs(this->z()) < s);
+            }
+
+            static Raytracer::Math::Vector3D random() {
+                return Raytracer::Math::Vector3D(random_double(), random_double(), random_double());
+            }
+
+            static Raytracer::Math::Vector3D random(double min, double max) {
+              return Raytracer::Math::Vector3D(random_double(min,max), random_double(min,max), random_double(min,max));
+            }
 
         private :
             double _x;
@@ -99,6 +132,25 @@ namespace Math {
 
     inline Vector3D unit_vector(const Vector3D& vec) {
         return vec / vec.length();
+    }
+    inline Raytracer::Math::Vector3D random_unit_vector() {
+        while (true) {
+            Raytracer::Math::Vector3D p = Raytracer::Math::Vector3D::random(-1,1);
+            double lensq = p.length_squared();
+            if (1e-160 < lensq && lensq <= 1)
+                return p / sqrt(lensq);
+        }
+    }
+    inline Raytracer::Math::Vector3D random_on_hemisphere(const Raytracer::Math::Vector3D& normal) {
+        Raytracer::Math::Vector3D on_unit_sphere = random_unit_vector();
+        if (dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
+            return on_unit_sphere;
+        else
+            return -on_unit_sphere;
+    }
+
+    inline Vector3D reflect(const Vector3D& Vector, const Vector3D&incidence) {
+        return Vector - 2 * dot(Vector, incidence) * incidence;
     }
 }
 }
