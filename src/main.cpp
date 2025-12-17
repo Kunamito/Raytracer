@@ -5,27 +5,34 @@
 ** main.cpp
 */
 
-
-#include <iostream>
-#include "Utils/Color.hpp"
+#include <memory>
+#include "Materials/Mirror.hpp"
+#include "Materials/Metal.hpp"
+#include "Materials/IMaterial.hpp"
 #include "Math/Vector.hpp"
+#include "Scene/Camera.hpp"
+#include "Primitives/Spheres.hpp"
+#include "Primitives/Hittables.hpp"
+#include "Utils/Color.hpp"
+
 
 int main(int ac, const char * const * argv) {
-        // Temporary
-        double ratio = 16.0 / 9.0;
-        int image_width = 400;
-        int image_height = int(image_width / ratio);
+    // Setup World
 
-        // Render
-        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    Raytracer::Primitives::HittableList World;
+    std::shared_ptr<Raytracer::Material::Lambertian> material_ground = std::make_shared<Raytracer::Material::Lambertian>(Raytracer::Color(0.8, 0.8, 0.0));
+    std::shared_ptr<Raytracer::Material::Lambertian> material_center = std::make_shared<Raytracer::Material::Lambertian>(Raytracer::Color(0.1, 0.2, 0.5));
+    std::shared_ptr<Raytracer::Material::IMaterials> material_left   = std::make_shared<Raytracer::Material::Mirror>(Raytracer::Color(0.8, 0.8, 0.8));
+    std::shared_ptr<Raytracer::Material::IMaterials> material_right  = std::make_shared<Raytracer::Material::Metal>(Raytracer::Color(0.8, 0.6, 0.2), 0.5);
 
-        for (int j = 0; j < image_height; j++) {
-            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-            for (int i = 0; i < image_width; i++) {
-                Raytracer::Color pixel_color = Raytracer::Color(double(i)/(image_width-1), double(j)/(image_height-1), 0, 255);
-                Raytracer::Color::write_color(std::cout, pixel_color);
-            }
-        }
+    World.Add(std::make_shared<Raytracer::Primitives::Spheres>(Raytracer::Math::Point3D( 0.0, -100.5, -1.0), 100.0, material_left));
+    World.Add(std::make_shared<Raytracer::Primitives::Spheres>(Raytracer::Math::Point3D( 0.0,    0.0, -1.2),   0.5, material_center));
+    World.Add(std::make_shared<Raytracer::Primitives::Spheres>(Raytracer::Math::Point3D(-1.0,    0.0, -1.0),   0.5, material_left));
+    World.Add(std::make_shared<Raytracer::Primitives::Spheres>(Raytracer::Math::Point3D( 1.0,    0.0, -1.0),   0.5, material_right));
 
-        std::clog << "\rDone.                 \n";
+    Raytracer::Scene::Camera SceneCamera(400);
+
+    // Display
+    SceneCamera.render(World);
+
 }
